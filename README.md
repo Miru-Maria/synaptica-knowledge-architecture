@@ -179,7 +179,7 @@ All endpoints are under `/api/knowledge/`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/synaptica-knowledge-architecture.git
+git clone https://github.com/Miru-Maria/synaptica-knowledge-architecture.git
 cd synaptica-knowledge-architecture
 
 # Install dependencies
