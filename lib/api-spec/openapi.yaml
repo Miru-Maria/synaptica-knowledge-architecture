@@ -1,0 +1,716 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: AI Knowledge Systems Workspace API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: openai
+    description: OpenAI AI chat, image, and audio operations
+  - name: knowledge
+    description: AI Knowledge Systems tools
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /openai/conversations:
+    get:
+      operationId: listOpenaiConversations
+      tags: [openai]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpenaiConversation"
+    post:
+      operationId: createOpenaiConversation
+      tags: [openai]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOpenaiConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiConversation"
+  /openai/conversations/{id}:
+    get:
+      operationId: getOpenaiConversation
+      tags: [openai]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+    delete:
+      operationId: deleteOpenaiConversation
+      tags: [openai]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiError"
+  /openai/conversations/{id}/messages:
+    get:
+      operationId: listOpenaiMessages
+      tags: [openai]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpenaiMessage"
+    post:
+      operationId: sendOpenaiMessage
+      tags: [openai]
+      summary: Send a text message and receive a streaming text response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOpenaiMessageBody"
+      responses:
+        "200":
+          description: SSE stream of assistant text chunks
+          content:
+            text/event-stream: {}
+
+  /knowledge/search:
+    post:
+      operationId: knowledgeSearch
+      tags: [knowledge]
+      summary: Semantic search over a knowledge base
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeSearchRequest"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeSearchResponse"
+
+  /knowledge/analyze-gaps:
+    post:
+      operationId: analyzeDocumentationGaps
+      tags: [knowledge]
+      summary: Identify missing coverage in documentation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GapAnalysisRequest"
+      responses:
+        "200":
+          description: Gap analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GapAnalysisResponse"
+
+  /knowledge/build-faq:
+    post:
+      operationId: buildFaq
+      tags: [knowledge]
+      summary: Convert flat documentation into structured FAQ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FaqBuildRequest"
+      responses:
+        "200":
+          description: Generated FAQ structure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FaqBuildResponse"
+
+  /knowledge/prompts:
+    get:
+      operationId: listPrompts
+      tags: [knowledge]
+      summary: List all prompt engineering templates
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of prompt templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromptTemplate"
+    post:
+      operationId: createPrompt
+      tags: [knowledge]
+      summary: Save a custom prompt template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePromptBody"
+      responses:
+        "201":
+          description: Created prompt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptTemplate"
+
+  /knowledge/prompts/{id}:
+    delete:
+      operationId: deletePrompt
+      tags: [knowledge]
+      summary: Delete a prompt template
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /knowledge/prompts/test:
+    post:
+      operationId: testPrompt
+      tags: [knowledge]
+      summary: Test a prompt template with sample input
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestPromptRequest"
+      responses:
+        "200":
+          description: SSE stream of AI response
+          content:
+            text/event-stream: {}
+
+  /knowledge/onboarding/sessions:
+    post:
+      operationId: createOnboardingSession
+      tags: [knowledge]
+      summary: Create a new onboarding assistant session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOnboardingSessionBody"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSession"
+    get:
+      operationId: listOnboardingSessions
+      tags: [knowledge]
+      summary: List onboarding sessions
+      responses:
+        "200":
+          description: Sessions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnboardingSession"
+
+  /knowledge/onboarding/sessions/{id}/messages:
+    post:
+      operationId: sendOnboardingMessage
+      tags: [knowledge]
+      summary: Send a message to the onboarding assistant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOnboardingMessageBody"
+      responses:
+        "200":
+          description: SSE stream of assistant response
+          content:
+            text/event-stream: {}
+    get:
+      operationId: listOnboardingMessages
+      tags: [knowledge]
+      summary: List messages in an onboarding session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnboardingMessage"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    OpenaiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    OpenaiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    CreateOpenaiConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    SendOpenaiMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    OpenaiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpenaiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    OpenaiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    KnowledgeSearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        documents:
+          type: string
+          description: The knowledge base content to search through
+        topK:
+          type: integer
+          default: 5
+      required:
+        - query
+        - documents
+
+    KnowledgeSearchResult:
+      type: object
+      properties:
+        title:
+          type: string
+        excerpt:
+          type: string
+        relevanceScore:
+          type: number
+        explanation:
+          type: string
+      required:
+        - title
+        - excerpt
+        - relevanceScore
+        - explanation
+
+    KnowledgeSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/KnowledgeSearchResult"
+        summary:
+          type: string
+      required:
+        - results
+        - summary
+
+    GapAnalysisRequest:
+      type: object
+      properties:
+        documentation:
+          type: string
+          description: Existing documentation content
+        context:
+          type: string
+          description: Product or domain context (e.g. support tickets, user stories)
+        audience:
+          type: string
+          description: Target audience for the documentation
+      required:
+        - documentation
+        - context
+
+    GapItem:
+      type: object
+      properties:
+        area:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+        suggestedContent:
+          type: string
+      required:
+        - area
+        - description
+        - priority
+        - suggestedContent
+
+    GapAnalysisResponse:
+      type: object
+      properties:
+        gaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/GapItem"
+        coverageScore:
+          type: integer
+          description: Estimated coverage percentage 0-100
+        summary:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+      required:
+        - gaps
+        - coverageScore
+        - summary
+        - recommendations
+
+    FaqBuildRequest:
+      type: object
+      properties:
+        documentation:
+          type: string
+          description: Source documentation content
+        audience:
+          type: string
+          description: Target audience for the FAQ
+        maxItems:
+          type: integer
+          default: 10
+      required:
+        - documentation
+
+    FaqItem:
+      type: object
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - question
+        - answer
+        - category
+        - tags
+
+    FaqBuildResponse:
+      type: object
+      properties:
+        faqs:
+          type: array
+          items:
+            $ref: "#/components/schemas/FaqItem"
+        categories:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+      required:
+        - faqs
+        - categories
+        - summary
+
+    PromptTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        isBuiltIn:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - description
+        - template
+        - variables
+        - isBuiltIn
+        - createdAt
+
+    CreatePromptBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - category
+        - description
+        - template
+        - variables
+
+    TestPromptRequest:
+      type: object
+      properties:
+        template:
+          type: string
+        variables:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - template
+        - variables
+
+    OnboardingSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        knowledgeBase:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - role
+        - knowledgeBase
+        - createdAt
+
+    CreateOnboardingSessionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        knowledgeBase:
+          type: string
+          description: Documentation content to base the onboarding on
+      required:
+        - name
+        - role
+        - knowledgeBase
+
+    OnboardingMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sessionId
+        - role
+        - content
+        - createdAt
+
+    SendOnboardingMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content

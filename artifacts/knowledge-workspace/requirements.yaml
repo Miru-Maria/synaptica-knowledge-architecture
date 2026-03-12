@@ -1,0 +1,12 @@
+packages:
+  "framer-motion": "For smooth layout transitions, page entries, and micro-interactions"
+  "react-markdown": "To render markdown nicely in AI responses"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to merge tailwind classes without style conflicts"
+
+images: []
+
+notes:
+  - "The backend API is available at /api."
+  - "Generated hooks from @workspace/api-client-react are used for standard REST calls."
+  - "Custom fetch + ReadableStream parsing is used for SSE endpoints."
